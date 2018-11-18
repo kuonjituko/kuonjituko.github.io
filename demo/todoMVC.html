@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>test</title>
+    <link rel="stylesheet" href="./css/index.css">
+  </head>
+  <body>
+    <section class="todoapp">
+      <header class="header">
+        <h1>备忘录</h1>
+        <input
+          autofocus="autofocus"
+          autocomplete="off"
+          placeholder="你想干啥!"
+          class="new-todo"
+          @keyup.enter = 'writelist' v-model="todoinput"
+        />
+      </header>
+      <section class="main">
+        <input type="checkbox" class="toggle-all " v-model="checkType"  @change = 'changeAll'/>
+        <ul class="todo-list">
+          <li class="todo" :class="{completed:item.type,editing:item == edited}" v-for="(item, index) in currentList"
+            @dblclick = 'edit(item)'>
+            <div class="view">
+              <input type="checkbox" class="toggle" v-model="item.type" />
+              <label>{{item.content}}</label> <button class="destroy" @click = 'delOne(index)'></button>
+            </div>
+            <input type="text" class="edit"  @blur = 'edited = undefined' @keyup.enter = 'edited = undefined' v-model="item.content" />
+          </li>
+        </ul>
+      </section>
+      <footer class="footer">
+        <span class="todo-count"><strong>{{numlist}}</strong> item left </span>
+        <ul class="filters">
+          <li><a href="#/all" :class="{selected:status == 'All'}"
+            @click = "status = 'All'"
+            >All</a></li>
+          <li><a href="#/active" :class="{selected:status == 'Active'}"
+            @click = " status = 'Active'"
+            >Active</a></li>
+          <li><a href="#/completed" :class="{selected:status == 'Completed'}"
+            @click = "status = 'Completed' "
+            >Completed</a></li>
+        </ul>
+        <button class="clear-completed" @click='clearAll'>Clear completed</button>
+      </footer>
+    </section>
+    <footer class="info">
+      <p>双击进入编辑状态</p>
+      <p>感谢 <a href="http://evanyou.me">Evan You</a></p>
+      <p>感谢 <a href="http://todomvc.com">TodoMVC</a></p>
+      <p>关于我 <a href="https://autumnfish.github.io/"></a></p>
+    </footer>
+  </body>
+</html>
+<script src="./lib/vue.js"></script>
+<script src="./lib/jquery-1.12.4.min.js"></script>
+<script>
+  let app = new Vue ({
+
+    el:'.todoapp',
+
+    data:{
+      todoinput:'',
+      inputlist:[],
+      checkType:false,
+      status:'All',
+      edited:false
+    },
+
+
+    methods:{
+      writelist(){
+        if (this.todoinput == '') {
+          alert('什么都没有输入')
+          return;
+        }
+        this.inputlist.unshift({
+         content: this.todoinput,
+         type:false
+      })
+      this.todoinput = ''
+    },
+
+    delOne(index){
+      this.inputlist.splice(index,1)
+    },
+
+    changeAll(){
+      this.inputlist.forEach(v=>{
+        v.type = this.checkType
+      })
+    },
+
+    clearAll(){
+      for (let i = this.inputlist.length-1; i>=0; i--) {
+          if (this.inputlist[i].type == true) {
+              this.inputlist.splice(i,1);
+          }
+      }
+    },
+
+    edit(item){
+      this.edited = item;
+    }
+    },
+
+
+    computed:{
+      numlist(){
+        let num = 0
+       this.inputlist.forEach(v=>{
+         if (v.type == false) {
+           num++
+         }
+       })
+       return num
+    },
+    currentList(){
+        if (this.status == 'All') {
+            return this.inputlist
+        }else if(this.status == 'Active'){
+          let temArr = []
+          this.inputlist.forEach(v=>{
+            if (v.type == false) {
+              temArr.push(v)
+            }
+          })
+          return temArr;
+        }else{
+          let temArr = []
+          this.inputlist.forEach(v=>{
+            if (v.type == true) {
+              temArr.push(v)
+            }
+        })
+        return temArr;
+      }
+    },
+
+
+
+    },
+
+    watch: {
+      inputlist: {
+        handler: function (val, oldVal) {
+          let checkNum = 0
+          this.inputlist.forEach(v=>{
+            if (v.type == true) {
+              checkNum++
+            }
+          })
+          this.checkType = this.inputlist.length == checkNum;
+         },
+      deep: true
+    }
+    },
+
+  
+    
+    created(){
+      this.inputlist = JSON.parse(window.localStorage.getItem('list')) || []
+    },
+  })
+
+
+  window.onbeforeunload = function () {
+    window.localStorage.setItem('list',JSON.stringify(app.inputlist))
+  }  
+</script>
